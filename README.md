@@ -1,1 +1,1 @@
-Este repositorio contiene un E-commerce construido desde el backend (node js, express) y frondend (react, vite)
+Este repositorio contiene un E-commerce construido desde el Backend (Node JS, Express) y Frontend (React, Vite y Tailwind)
