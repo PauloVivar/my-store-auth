@@ -37,29 +37,41 @@ class AuthService {
     };
   }
 
-  async sendMail(email){
+  async sendRecovery(email){
     const user = await service.findByEmail(email);
     if(!user){
       throw boom.unauthorized();
     }
+    //Generación de token
+    const payload = { sub: user.id }
+    const token = jwt.sign(payload, config.jwtSecret, {expiresIn: '15min'});
+    const link = `http://myfrontend.com/recovery?token=${token}`;
+    //Guardar ern la DB el tocken
+    await service.update(user.id, { recoveryToken: token });
 
+    const mail ={
+      from: config.smtpEmail, // sender address
+      to: `${user.email}`, // list of receivers
+      subject: 'Recuperación de contraseña SHOP', // Subject line
+      text: 'Email para recuperación de contraseña TP', // plain text body
+      html: `<b>Ingresa a este link -> ${link} </b>`, // html body
+    }
+    const rta = await this.sendMail(mail);
+    return rta;
+  }
+
+  async sendMail(infoMail){
     const transporter = nodemailer.createTransport({
       host: 'smtp.mail.yahoo.com',
       port: 465,
       secure: true, // Use `true` for port 465, `false` for all other ports
       auth: {
-          user: 'hackconda9@ymail.com',
-          pass: 'scwtofqnemqcyfuu'
+          user: config.smtpEmail,
+          pass: config.smtpPassword
       }
     });
 
-    await transporter.sendMail({
-      from: 'hackconda9@ymail.com', // sender address
-      to: `${user.email}`, // list of receivers
-      subject: 'Hola Amigo✔', // Subject line
-      text: 'Hola Mundo de ymail?', // plain text body
-      html: '<b>Que tal amigo, es mi n mail enviado</b>', // html body
-    });
+    await transporter.sendMail(infoMail);
     return { message: 'Email enviado' };
   }
 }
