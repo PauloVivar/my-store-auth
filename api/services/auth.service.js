@@ -2,12 +2,10 @@
 const UserService = require('./user.service');
 const boom = require('@hapi/boom');
 const bcrypt = require('bcrypt');
-
 const jwt = require('jsonwebtoken');
 const { config } = require('./../config/config');
 
 const nodemailer = require('nodemailer');
-
 const service = new UserService();
 
 class AuthService {
@@ -58,6 +56,21 @@ class AuthService {
     }
     const rta = await this.sendMail(mail);
     return rta;
+  }
+
+  async changePassword(token, newPassword){
+    try {
+      const payload = jwt.verify(token, config.jwtSecret);
+      const user = await service.findOne(payload.sub);
+      if (user.recoveryToken !== token){
+        throw boom.unauthorized();
+      }
+      const hash = await bcrypt.hash(newPassword, 10);   //hash de la newPasword
+      await service.update(user.id, {recoveryToken: null, password: hash});
+      return { message: 'contraseña cambiada' }
+    } catch (error) {
+      throw boom.unauthorized();
+    }
   }
 
   async sendMail(infoMail){

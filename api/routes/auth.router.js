@@ -2,6 +2,9 @@ const express = require('express');
 const passport = require('passport');
 const AuthService = require('./../services/auth.service');
 
+const validatorHandler = require('./../middlewares/validator.handler');
+const { updateAuthEmailSchema, updateAuthPasswordSchema } = require('./../schemas/user.schema');
+
 const router = express.Router();
 const service = new AuthService();
 
@@ -18,6 +21,7 @@ router.post('/login',
 );
 
 router.post('/recovery',
+  validatorHandler(updateAuthEmailSchema, 'body'),
   async (req, res, next) => {
     try {
       const { email } = req.body;
@@ -31,10 +35,11 @@ router.post('/recovery',
 );
 
 router.post('/change-password',
+  validatorHandler(updateAuthPasswordSchema, 'body'),
   async (req, res, next) => {
     try {
       const { token, newPassword } = req.body;
-      const rta = await service.sendRecovery(email)
+      const rta = await service.changePassword(token, newPassword)
       res.json(rta);
 
     } catch (error) {
